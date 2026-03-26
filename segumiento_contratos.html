@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de Contratos 2026 - DPAO</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f6fa}
+.header{background:linear-gradient(135deg,#1a73e8,#1557b0);padding:20px 30px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:20px;font-weight:600}
+.header .sub{font-size:12px;opacity:0.8;margin-top:2px}
+.summary{display:flex;gap:12px;padding:20px 30px;flex-wrap:wrap}
+.card{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);min-width:140px;flex:1}
+.card-num{font-size:28px;font-weight:700;color:#1a73e8}
+.card-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+.card.op .card-num{color:#43a047}
+.card.sop .card-num{color:#8e24aa}
+.card.monto .card-num{font-size:20px;color:#e53935}
+.filters{padding:0 30px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.filter-select{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;outline:none;cursor:pointer}
+.filter-select:focus{border-color:#1a73e8}
+.search{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;width:250px;outline:none}
+.search:focus{border-color:#1a73e8}
+.table-wrap{padding:0 30px 30px;overflow-x:auto}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+thead th{background:#f8f9fa;padding:10px 14px;text-align:left;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e8e8e8;position:sticky;top:0;cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{background:#eef1f5}
+tbody td{padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0;color:#333}
+tbody tr:hover{background:#f8f9ff}
+tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-op{background:#e8f5e9;color:#2e7d32}
+.badge-sop{background:#f3e5f5;color:#6a1b9a}
+.badge-inv{background:#fff3e0;color:#e65100}
+.badge-ejecucion{background:#e3f2fd;color:#1565c0}
+.badge-licitacion{background:#fff8e1;color:#f57f17}
+.proy-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.proy-sn{background:#e8f5e9;color:#2e7d32}
+.proy-qi{background:#e3f2fd;color:#1565c0}
+.proy-brt{background:#fce4ec;color:#c62828}
+.progress-bar{width:100%;height:6px;background:#eee;border-radius:3px;overflow:hidden;min-width:80px}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.5s}
+.progress-fill.low{background:#f44336}
+.progress-fill.med{background:#ff9800}
+.progress-fill.high{background:#4caf50}
+.progress-text{font-size:11px;color:#888;margin-top:2px}
+.monto-cell{font-family:'Consolas',monospace;font-size:12px;color:#1a73e8;font-weight:500;white-space:nowrap}
+.contratista-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:2000;display:none;align-items:center;justify-content:center}
+.overlay.active{display:flex}
+.modal{background:#fff;border-radius:16px;width:560px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:modalIn 0.25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:16px 24px;background:#1a73e8;color:#fff;position:relative}
+.modal-header h3{font-size:16px;font-weight:600;color:#fff;padding-right:30px}
+.modal-header .modal-sub{font-size:12px;color:rgba(255,255,255,0.8);margin-top:3px}
+.modal-body{padding:20px 24px}
+.modal-row{display:flex;padding:8px 0;border-bottom:1px solid #f0f0f0}
+.modal-row:last-child{border:none}
+.modal-key{color:#888;font-size:13px;width:140px;flex-shrink:0}
+.modal-val{color:#222;font-size:13px;font-weight:500}
+.close-btn{position:absolute;top:14px;right:16px;color:#fff;background:rgba(255,255,255,0.2);border:none;font-size:18px;cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.close-btn:hover{background:rgba(255,255,255,0.35)}
+.sort-arrow{font-size:10px;margin-left:4px;opacity:0.4}
+th.sorted .sort-arrow{opacity:1;color:#1a73e8}
+</style>
+</head>
+<body>
+<div class="header">
+<div>
+<h1>Seguimiento de Contratos 2026</h1>
+<div class="sub">Direccion de Proyectos y Asuntos de Obra | Proyectos Ferroviarios</div>
+</div>
+<div style="text-align:right">
+<div style="font-size:24px;font-weight:700" id="total-contratos">26</div>
+<div class="sub">Contratos totales</div>
+</div>
+</div>
+<div class="summary">
+<div class="card op"><div class="card-num" id="c-op">7</div><div class="card-label">Obra publica</div></div>
+<div class="card sop"><div class="card-num" id="c-sop">8</div><div class="card-label">Supervision</div></div>
+<div class="card"><div class="card-num" id="c-eje">16</div><div class="card-label">En ejecucion</div></div>
+<div class="card"><div class="card-num" id="c-lic">10</div><div class="card-label">En licitacion</div></div>
+<div class="card monto"><div class="card-num" id="c-monto">$0</div><div class="card-label">Monto total contratado</div></div>
+</div>
+<div class="filters">
+<select class="filter-select" id="f-proy" onchange="render()">
+<option value="">Todos los proyectos</option>
+<option value="SN">Saltillo-Nuevo Laredo</option>
+<option value="QI">Queretaro-Irapuato</option>
+<option value="BRT">BRT Periferico</option>
+</select>
+<select class="filter-select" id="f-tipo" onchange="render()">
+<option value="">Todos los tipos</option>
+<option value="OP">Obra Publica</option>
+<option value="SOP">Supervision</option>
+<option value="INV">Invitacion</option>
+</select>
+<select class="filter-select" id="f-estado" onchange="render()">
+<option value="">Todos los estados</option>
+<option value="En ejecucion">En ejecucion</option>
+<option value="En licitacion">En licitacion</option>
+</select>
+<input class="search" id="search" placeholder="Buscar contratista, contrato, descripcion..." oninput="render()">
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th onclick="sortBy('proy')">Proyecto <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('tipo')">Tipo <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('desc')" style="min-width:200px">Descripcion <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('contratista')">Contratista <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('monto')">Monto c/IVA <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('afis')">Avance fisico <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('af')">Avance financiero <span class="sort-arrow">▼</span></th>
+<th onclick="sortBy('estado')">Estado <span class="sort-arrow">▼</span></th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+<div class="modal-header">
+<button class="close-btn" onclick="closeModal()">&times;</button>
+<h3 id="modal-title"></h3>
+<div class="modal-sub" id="modal-sub"></div>
+</div>
+<div class="modal-body" id="modal-body"></div>
+</div>
+</div>
+
+<script>
+var data=[{"n": 1, "proy": "SN", "desc": "Construccion y diseno de 111 km del Tren de Pasajeros Saltillo-Nuevo Laredo (Tramo 1)", "tipo": "OP", "contrato": "ARTF/058-OP/2025", "contratista": "Operadora CICSA / FCC Construccion", "monto": "$31,843,777,595.82", "inicio": "30/09/2025", "termino": "16/05/2028", "af": 0.47, "afis": 0.02, "estado": "En ejecucion"}, {"n": 2, "proy": "SN", "desc": "Supervision y control - 111 km Tramo 1", "tipo": "SOP", "contrato": "ARTF/021-SOP/2025", "contratista": "AYESA Mexico / Capital Humano", "monto": "$265,888,932.10", "inicio": "27/08/2025", "termino": "09/07/2028", "af": 11.57, "afis": 6.71, "estado": "En ejecucion"}, {"n": 3, "proy": "SN", "desc": "Construccion y diseno de 100.05 km (Tramo 2)", "tipo": "OP", "contrato": "ARTF/027-OP/2025", "contratista": "ICA Constructora", "monto": "$14,676,424,791.50", "inicio": "26/08/2025", "termino": "04/11/2028", "af": 0.0, "afis": 0.0, "estado": "En ejecucion"}, {"n": 4, "proy": "SN", "desc": "Supervision y control - 100.05 km Tramo 2", "tipo": "SOP", "contrato": "ARTF/017-SOP/2025", "contratista": "Consultoria Integral en Ingenieria", "monto": "$301,595,205.43", "inicio": "08/01/2025", "termino": "06/01/2028", "af": 1.07, "afis": 0.19, "estado": "En ejecucion"}, {"n": 5, "proy": "SN", "desc": "Construccion y diseno de 136.48 km (Tramo 3)", "tipo": "OP", "contrato": "ARTF/060-OP/2025", "contratista": "GAMI Ingenieria / Constructores Jaliscienses", "monto": "$12,669,670,550.55", "inicio": "08/01/2025", "termino": "08/31/2028", "af": 2.99, "afis": 1.31, "estado": "En ejecucion"}, {"n": 6, "proy": "SN", "desc": "Supervision y control - 136.48 km Tramo 3", "tipo": "SOP", "contrato": "ARTF/055-SOP/2025", "contratista": "Desarrollo Tecnologia y Planeacion", "monto": "$260,626,475.26", "inicio": "13/10/2025", "termino": "31/07/2028", "af": 9.33, "afis": 4.27, "estado": "En ejecucion"}, {"n": 7, "proy": "SN", "desc": "Construccion y diseno de 30.75 km (Tramo 4)", "tipo": "OP", "contrato": "ARTF_086-OP_2025", "contratista": "ICA Constructora / Constructora El Cairo", "monto": "$12,934,995,915.39", "inicio": "16/01/2026", "termino": "31/10/2028", "af": 0.0, "afis": 0.0, "estado": "En ejecucion"}, {"n": 8, "proy": "SN", "desc": "Supervision y control - 30.75 km Tramo 4", "tipo": "SOP", "contrato": "ARTF-070-SOP-2025", "contratista": "Consultoria Integral en Ingenieria", "monto": "$241,275,835.11", "inicio": "02/12/2025", "termino": "31/12/2028", "af": 0.0, "afis": 0.0, "estado": "En ejecucion"}, {"n": 9, "proy": "SN", "desc": "Construccion y diseno de 8.854 km (Tramo 5)", "tipo": "", "contrato": "", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 10, "proy": "SN", "desc": "Supervision y control - 8.854 km Tramo 5", "tipo": "", "contrato": "", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 11, "proy": "SN", "desc": "Sistemas Ferroviarios - Senalizacion, telecomunicaciones", "tipo": "", "contrato": "", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 1, "proy": "QI", "desc": "Construccion y diseno de 30.70 km Tramo I (Queretaro-Irapuato)", "tipo": "OP", "contrato": "ARTF/026-OP/2025", "contratista": "Mota-Engil Mexico", "monto": "$7,632,155,331.36", "inicio": "28/08/2025", "termino": "29/06/2027", "af": 9.86, "afis": 7.38, "estado": "En ejecucion"}, {"n": 2, "proy": "QI", "desc": "Supervision y control - 30.70 km Tramo I", "tipo": "SOP", "contrato": "ARTF/018-SOP/2025", "contratista": "AYESA Mexico", "monto": "$199,999,490.81", "inicio": "01/08/2025", "termino": "31/10/2027", "af": 23.07, "afis": 18.53, "estado": "En ejecucion"}, {"n": 3, "proy": "QI", "desc": "Construccion y diseno de 70.70 km Tramo II (tu proyecto)", "tipo": "OP", "contrato": "ARTF/061-OP/2025", "contratista": "Mota-Engil Mexico", "monto": "$20,203,927,477.00", "inicio": "16/10/2025", "termino": "28/02/2028", "af": 7.32, "afis": 6.32, "estado": "En ejecucion"}, {"n": 4, "proy": "QI", "desc": "Supervision y control - 70.70 km Tramo II", "tipo": "SOP", "contrato": "ARTF/059-SOP/2025", "contratista": "SCALA Supervision", "monto": "$304,715,553.44", "inicio": "01/10/2025", "termino": "30/04/2028", "af": 9.57, "afis": 6.42, "estado": "En ejecucion"}, {"n": 5, "proy": "QI", "desc": "Supervision y control - 1.2 km Tramo III", "tipo": "SOP", "contrato": "ARTF-072-SOP-2025", "contratista": "DOZZER Construccion", "monto": "$228,724,566.59", "inicio": "27/11/2025", "termino": "31/07/2028", "af": 1.8, "afis": 0.0, "estado": "En ejecucion"}, {"n": 6, "proy": "QI", "desc": "Construccion y diseno de 1.2 km Tramo III", "tipo": "OP", "contrato": "ATTRAPI/013-OP/2026", "contratista": "COMSA Infraestructuras", "monto": "$3,411,823,240.22", "inicio": "20/02/2026", "termino": "", "af": 0, "afis": 0, "estado": "En ejecucion"}, {"n": 7, "proy": "QI", "desc": "Cuatro edificios auxiliares", "tipo": "", "contrato": "", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 8, "proy": "QI", "desc": "Sistemas Ferroviarios", "tipo": "", "contrato": "", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 9, "proy": "QI", "desc": "Supervision edificios auxiliares", "tipo": "", "contrato": "", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 10, "proy": "QI", "desc": "Asesoria tecnica especializada", "tipo": "", "contrato": "ATTRAPI/01", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 1, "proy": "BRT", "desc": "Corredor BRT Periferico-Interurbano", "tipo": "OP", "contrato": "ARTF/077-OP/2025", "contratista": "ICA Constructora", "monto": "", "inicio": "15/12/2025", "termino": "07/07/2027", "af": 0, "afis": 0, "estado": "En ejecucion"}, {"n": 2, "proy": "BRT", "desc": "Supervision BRT Periferico-Interurbano", "tipo": "SOP", "contrato": "ARTF/080-SOP/2025", "contratista": "Transconsult / Senermex", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En ejecucion"}, {"n": 3, "proy": "BRT", "desc": "Proteccion acueducto, cruce y senalizacion", "tipo": "INV", "contrato": "ATTRAPI/02", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 4, "proy": "BRT", "desc": "Drenaje y mejoramiento urbano", "tipo": "INV", "contrato": "ATTRAPI/03", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}, {"n": 5, "proy": "BRT", "desc": "Alumbrado mejoramiento urbano", "tipo": "INV", "contrato": "ATTRAPI/04", "contratista": "", "monto": "", "inicio": "", "termino": "", "af": 0, "afis": 0, "estado": "En licitacion"}];
+var sortCol='proy',sortDir=1;
+
+function parseMonto(m){
+if(!m)return 0;
+return parseFloat(m.replace(/[$,\s]/g,''))||0;
+}
+
+function fmtMonto(n){
+if(!n)return'-';
+return'$'+n.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function getFiltered(){
+var fp=document.getElementById('f-proy').value;
+var ft=document.getElementById('f-tipo').value;
+var fe=document.getElementById('f-estado').value;
+var q=document.getElementById('search').value.toLowerCase();
+return data.filter(function(c){
+if(fp&&c.proy!==fp)return false;
+if(ft&&c.tipo!==ft)return false;
+if(fe&&c.estado!==fe)return false;
+if(q&&!(c.desc.toLowerCase().includes(q)||c.contratista.toLowerCase().includes(q)||c.contrato.toLowerCase().includes(q)))return false;
+return true;
+});
+}
+
+function sortBy(col){
+if(sortCol===col)sortDir*=-1;
+else{sortCol=col;sortDir=1}
+render();
+}
+
+function progressBar(val){
+var cls=val<5?'low':val<15?'med':'high';
+return'<div class="progress-bar"><div class="progress-fill '+cls+'" style="width:'+Math.min(val,100)+'%"></div></div><div class="progress-text">'+val.toFixed(1)+'%</div>';
+}
+
+function showDetail(idx){
+var c=data[idx];
+var b=document.getElementById('modal-body');
+document.getElementById('modal-title').textContent=c.desc;
+document.getElementById('modal-sub').textContent=c.contrato||'Sin contrato asignado';
+b.innerHTML='<div class="modal-row"><span class="modal-key">Proyecto</span><span class="modal-val">'+({SN:'Saltillo-Nuevo Laredo',QI:'Queretaro-Irapuato',BRT:'BRT Periferico'}[c.proy]||c.proy)+'</span></div>'
++'<div class="modal-row"><span class="modal-key">Tipo</span><span class="modal-val">'+(c.tipo||'Por definir')+'</span></div>'
++'<div class="modal-row"><span class="modal-key">Estado</span><span class="modal-val"><span class="badge badge-'+(c.estado==='En ejecucion'?'ejecucion':'licitacion')+'">'+c.estado+'</span></span></div>'
++'<div class="modal-row"><span class="modal-key">Contratista</span><span class="modal-val">'+(c.contratista||'Por asignar')+'</span></div>'
++'<div class="modal-row"><span class="modal-key">Monto c/IVA</span><span class="modal-val" style="color:#1a73e8;font-family:Consolas">'+(c.monto||'Por definir')+'</span></div>'
++'<div class="modal-row"><span class="modal-key">Inicio</span><span class="modal-val">'+(c.inicio||'-')+'</span></div>'
++'<div class="modal-row"><span class="modal-key">Termino</span><span class="modal-val">'+(c.termino||'-')+'</span></div>'
++'<div class="modal-row"><span class="modal-key">Avance fisico</span><span class="modal-val">'+c.afis.toFixed(1)+'%</span></div>'
++'<div class="modal-row"><span class="modal-key">Avance financiero</span><span class="modal-val">'+c.af.toFixed(1)+'%</span></div>';
+document.getElementById('overlay').classList.add('active');
+}
+
+function closeModal(){document.getElementById('overlay').classList.remove('active')}
+
+function render(){
+var f=getFiltered();
+f.sort(function(a,b){
+var va=a[sortCol]||'',vb=b[sortCol]||'';
+if(sortCol==='af'||sortCol==='afis')return(a[sortCol]-b[sortCol])*sortDir;
+if(sortCol==='monto')return(parseMonto(a.monto)-parseMonto(b.monto))*sortDir;
+return String(va).localeCompare(String(vb))*sortDir;
+});
+
+var tbody=document.getElementById('tbody');
+tbody.innerHTML='';
+var totalMonto=0;
+f.forEach(function(c,i){
+var idx=data.indexOf(c);
+var proyClass={SN:'proy-sn',QI:'proy-qi',BRT:'proy-brt'}[c.proy]||'';
+var proyName={SN:'SN',QI:'QI',BRT:'BRT'}[c.proy]||c.proy;
+var tipoClass=c.tipo==='OP'?'badge-op':c.tipo==='SOP'?'badge-sop':c.tipo==='INV'?'badge-inv':'';
+var estadoClass=c.estado==='En ejecucion'?'badge-ejecucion':'badge-licitacion';
+if(c.monto)totalMonto+=parseMonto(c.monto);
+var tr=document.createElement('tr');
+tr.style.cursor='pointer';
+tr.onclick=function(){showDetail(idx)};
+tr.innerHTML='<td><span class="proy-badge '+proyClass+'">'+proyName+'</span></td>'
++'<td>'+(c.tipo?'<span class="badge '+tipoClass+'">'+c.tipo+'</span>':'-')+'</td>'
++'<td>'+c.desc+'</td>'
++'<td class="contratista-cell" title="'+(c.contratista||'')+'">'+(c.contratista||'<span style="color:#bbb">Por asignar</span>')+'</td>'
++'<td class="monto-cell">'+(c.monto||'-')+'</td>'
++'<td>'+progressBar(c.afis)+'</td>'
++'<td>'+progressBar(c.af)+'</td>'
++'<td><span class="badge '+estadoClass+'">'+c.estado+'</span></td>';
+tbody.appendChild(tr);
+});
+
+document.getElementById('total-contratos').textContent=f.length;
+document.getElementById('c-op').textContent=f.filter(function(c){return c.tipo==='OP'}).length;
+document.getElementById('c-sop').textContent=f.filter(function(c){return c.tipo==='SOP'}).length;
+document.getElementById('c-eje').textContent=f.filter(function(c){return c.estado==='En ejecucion'}).length;
+document.getElementById('c-lic').textContent=f.filter(function(c){return c.estado==='En licitacion'}).length;
+document.getElementById('c-monto').textContent=fmtMonto(totalMonto);
+}
+
+render();
+</script>
+</body>
+</html>
